@@ -1,35 +1,42 @@
-import { Injectable } from '@nestjs/common';  
-import * as path from 'path';  
-import * as fs from 'fs';  
-import { exec } from 'child_process'; // 모델 실행을 위해 사용  
+// files.service.ts
+import { Injectable } from '@nestjs/common';
+import axios from 'axios';
+import FormData from 'form-data';
 
-@Injectable()  
-export class FilesService {  
-  async processFile(file: Express.Multer.File) {  
-    // 파일 저장 경로  
-    const filePath = path.join(__dirname, '..', '..', '..', '..', 'deepfake_detection_service_deepvoice', 'data_example', file.originalname); 
+@Injectable()
+export class FilesService {
+  // 배포된 ML 서버(FastAPI/Uvicorn)로 바로 업로드하여 결과 받기
+  private readonly ML_URL =
+    (process.env.ML_URL || 'http://127.0.0.1:8000').replace(/\/$/, '');
+  private readonly ML_PREDICT_PATH = process.env.ML_PREDICT_PATH || '/predict';
+  private readonly ML_TIMEOUT_MS = Number(process.env.ML_TIMEOUT_MS || 60000);
 
-    // 파일 저장  
-    fs.writeFileSync(filePath, file.buffer);  
+  async processFile(file: Express.Multer.File) {
+    // 디스크 저장 없이 바로 멀티파트로 전달 (최소 변경)
+    const form = new FormData();
+    form.append('file', file.buffer, {
+      filename: file.originalname || 'upload.bin',
+      contentType: file.mimetype || 'application/octet-stream',
+    });
 
-    // 알고리즘 모델 실행   
-    const result = await this.runModel(filePath);  
-    
-    // 결과 반환  
-    return { result };  
-  }  
+    const url = `${this.ML_URL}${this.ML_PREDICT_PATH}`;
 
-  async runModel(filePath: string): Promise<any> {  
-    return new Promise((resolve, reject) => {  
-      // 가상환경의 Python 경로를 사용해 Python 스크립트 실행  
-      exec(`/Users/jongin/deepfake_detection_service_deepvoice/myenv/bin/python /Users/jongin/deepfake_detection_service_deepvoice/result.py ${filePath}`, (error, stdout, stderr) => {  
-        if (error) {  
-          console.error(`Error: ${stderr}`);  
-          reject(`Error: ${stderr}`);  
-          return;  
-        }  
-        resolve(stdout);  
-      });  
-    });  
+    const resp = await axios.post(url, form, {
+      headers: { ...form.getHeaders() },
+      timeout: this.ML_TIMEOUT_MS,
+      proxy: false,
+      validateStatus: () => true,
+    });
+
+    if (resp.status < 200 || resp.status >= 300) {
+      throw new Error(
+        `ML server error ${resp.status}: ${
+          typeof resp.data === 'string' ? resp.data : JSON.stringify(resp.data)
+        }`,
+      );
+    }
+
+    // FastAPI가 반환한 JSON을 그대로 전달
+    return { result: resp.data };
   }
-}  
+}
