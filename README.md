@@ -12,12 +12,16 @@
 이 프로젝트는 **DeepVoice Shield** 모바일 앱과 AI 모델 사이를 연결하는 **중추적인 백엔드 서버**입니다.
 RESTful API를 통한 회원/게시판 관리뿐만 아니라, 실시간 통화를 위한 **WebRTC 시그널링**과 딥보이스 탐지 결과를 중계하는 **WebSocket Gateway** 역할을 수행합니다.
 
+
+
 ### 🔑 Key Features
 1. **User Authentication**: JWT 기반 인증, 비밀번호 암호화(Bcrypt), 역할(Role) 기반 권한 관리.
 2. **WebRTC Signaling**: 1:1 통화를 위한 P2P 연결 정보(Offer, Answer, ICE Candidate) 중계.
 3. **Deepfake Verdict Relay**: 송신측(또는 AI)에서 분석된 딥보이스 확률 정보를 수신측에게 실시간 전달.
 4. **ML Server Proxy**: 앱에서 업로드한 음성 파일을 AI 추론 서버(FastAPI)로 전달하고 결과 반환.
 5. **Dashboard API**: 공지사항 및 커뮤니티 기능을 위한 게시판 CRUD.
+
+
 
 ## 🚀 System Architecture
 ```mermaid
@@ -45,6 +49,8 @@ sequenceDiagram
     Nest->>App: relay('deepfake-verdict') to Peer
 ```
 
+
+
 ## 📂 Directory Structure
 ```bash
 src
@@ -58,6 +64,8 @@ src
 │   └── users       # 사용자 관리
 └── main.ts         # Entry Point
 ```
+
+
 
 ## 🛠️ Environment Setup (.env)
 루트 디렉토리에 `.env` 파일을 생성하고 아래 변수들을 설정해주세요.
@@ -82,6 +90,8 @@ ML_PREDICT_PATH=/predict
 ML_TIMEOUT_MS=60000
 ```
 
+
+
 ## 🚀 Getting Started
 ### 1. Installation
 ```bash
@@ -103,6 +113,8 @@ npm run start:dev
 npm run build
 npm run start:prod
 ```
+
+
 
 ## 📡 API Documentation
 ### Auth & Users
@@ -130,6 +142,8 @@ npm run start:prod
 | :--- | :--- | :--- | :--- |
 | `POST` | `/files/upload` | 음성 파일 분석 요청 | `multipart/form-data` (file) |
 
+
+
 ## 🔌 WebSocket Events (Socket.io)
 
 **Namespace:** `/` (Default)
@@ -150,6 +164,8 @@ npm run start:prod
 | `deepfake-verdict` | Client ↔ Server | 딥보이스 확률 정보 실시간 중계 | `{ pFake: 0.98, pReal: 0.02 }` |
 
 
+
+
 ## 🔌 WebSocket Events (Socket.io)
 **Namespace: /**
 
@@ -168,6 +184,8 @@ hangup: 통화 종료
   + 실시간으로 분석된 딥페이크 확률(pFake, pReal)을 상대방 소켓으로 중계합니다.
 
   + 서버는 이 데이터를 저장하지 않고 즉시 전달(Relay)만 수행합니다.
+
+
 
 ## 🔗 Related Repositories
 + Backend: [deepfake_detection_service_backend](https://github.com/thisNorm/deepfake_detection_service_backend.git)
